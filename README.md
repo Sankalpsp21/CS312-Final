@@ -22,14 +22,6 @@ This project provides a comprehensive guide and set of scripts to automate the d
 
 This solution automates the provisioning of necessary AWS infrastructure (EC2 instance, Security Group, Key Pair) and the subsequent configuration of the instance. The configuration includes installing Java, downloading the official Minecraft server JAR, and setting up a `systemd` service. This service ensures the Minecraft server starts automatically on boot and can be managed using standard system commands, facilitating a hands-off setup post-deployment.
 
-The key benefits of this approach are:
-* **Automation:** Reduces manual effort and potential for human error.
-* **Consistency:** Ensures identical server environments every time.
-* **Version Control:** Infrastructure and configuration are versioned in Git.
-* **Scalability (Conceptual):** While this setup is for a single server, the principles can be extended.
-
-This project specifically avoids using the AWS Management Console for setup and does not rely on the EC2 `user_data` field for bootstrapping, instead utilizing Terraform provisioners for configuration.
-
 ## Pipeline Stages
 
 The deployment process follows these distinct stages:
@@ -54,21 +46,10 @@ The deployment process follows these distinct stages:
     * Once the EC2 instance is running, Terraform connects to it via SSH (using the provided private key).
     * The `file` provisioner uploads the `scripts/install-minecraft.sh` script to the EC2 instance.
     * The `remote-exec` provisioner executes this script with `sudo` privileges on the instance.
-    * The `install-minecraft.sh` script performs:
-        * System package updates.
-        * Installation of Amazon Corretto 21 (Java JDK).
-        * Creation of a dedicated directory and user context for Minecraft.
-        * Download of the latest stable Minecraft server JAR (URL specified in the script).
-        * Automatic acceptance of the Minecraft EULA.
-        * Setup of a `systemd` service (`minecraft.service`) to manage the Minecraft server process, enabling auto-start on boot and easy start/stop/status checks.
-        * Enabling and starting the `minecraft` service.
 
 5.  **Output & Verification:**
     * Terraform outputs the public IP address of the newly created Minecraft server.
     * The user can then verify port accessibility using `nmap` and connect to the server using their Minecraft Java Edition client.
-
-6.  **Decommissioning (`terraform destroy`):**
-    * Terraform removes all resources it created, preventing ongoing charges.
 
 ## Prerequisites
 
@@ -88,13 +69,6 @@ Ensure the following tools are installed on your local machine or the VM you'll 
 * **SSH Client:** Required by Terraform to connect to the EC2 instance for provisioning.
     * Linux/macOS: Typically pre-installed (OpenSSH).
     * Windows: Modern Windows 10/11 include OpenSSH. Alternatively, Git Bash includes an SSH client.
-* **(Optional) `nmap`:** For network verification.
-    * Installation:
-        * Linux (Debian/Ubuntu): `sudo apt update && sudo apt install nmap`
-        * macOS (Homebrew): `brew install nmap`
-        * Windows: Download from [nmap.org/download.html](https://nmap.org/download.html)
-    * Verify: `nmap --version`
-* **Minecraft Java Edition Client:** To connect to the server.
 
 ### AWS Configuration
 
@@ -105,28 +79,17 @@ Ensure the following tools are installed on your local machine or the VM you'll 
     AWS Access Key ID [None]: YOUR_ACCESS_KEY_ID
     AWS Secret Access Key [None]: YOUR_SECRET_ACCESS_KEY
     Default region name [None]: us-west-2
-    Default output format [None]: json
     ```
-    **Security Best Practice:** Use IAM credentials with the least privilege necessary. Avoid using root account credentials. For enhanced security, consider using temporary credentials or IAM roles if running Terraform from an automated environment. **Never commit your AWS secret keys to Git.**
 
 ### SSH Key Pair
 
 Terraform will create an `aws_key_pair` resource using your public SSH key. The corresponding private key is needed for Terraform's provisioners to SSH into the EC2 instance.
 
-1.  **Check for existing keys:** Look for files like `id_rsa`/`id_rsa.pub` or `minecraft_key`/`minecraft_key.pub` in `~/.ssh/` (Linux/macOS) or `C:\Users\YourUsername\.ssh\` (Windows).
-2.  **Generate a new key pair if needed:**
-    * **Linux/macOS or Windows (OpenSSH/Git Bash):**
-        ```bash
-        ssh-keygen -t rsa -b 4096 -f ~/.ssh/minecraft_key -C "minecraft-key-aws"
-        ```
-        This command creates `minecraft_key` (private key) and `minecraft_key.pub` (public key). Do not set a passphrase if Terraform will use it non-interactively, or use `ssh-agent`.
-    * The `main.tf` file is configured to look for the public key at `~/.ssh/minecraft_key.pub` and the private key at `~/.ssh/minecraft_key`. Adjust paths in `main.tf` if yours are different.
-3.  **Set Permissions for Private Key (Crucial):**
-    * **Linux/macOS or Windows (Git Bash/WSL):**
-        ```bash
-        chmod 400 ~/.ssh/minecraft_key
-        ```
-    * **Windows (Native):** Ensure the private key file permissions are restricted so only your user account can read it (via File Properties -> Security).
+**Generate a new key pair if needed:**
+ * **Linux/macOS or Windows (OpenSSH/Git Bash):**
+     ```bash
+     ssh-keygen -t rsa -b 4096 -f ~/.ssh/minecraft_key -C "minecraft-key-aws"
+     ```
 
 ## Deployment Tutorial
 
@@ -176,6 +139,19 @@ Review the output carefully.
 ### Step 6: Apply Terraform Configuration
 Execute the deployment:
 
+Resources and Sources
+Terraform Documentation:
+Terraform AWS Provider
+Terraform Provisioners (Note: HashiCorp generally recommends using provisioners sparingly.)
+AWS Documentation:
+Amazon EC2 User Guide
+Amazon Linux 2023
+Amazon Corretto
+Security Groups for your VPC
+Minecraft:
+Minecraft Java Edition Server Download (The script uses a direct Mojang Piston Data URL for a specific server version.)
+Systemd:
+systemd.service — Service unit configuration
 ```bash
 terraform apply
 ```
