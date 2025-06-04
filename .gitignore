@@ -1,0 +1,16 @@
+# Terraform specific
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+*.tfplan
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Credentials - IMPORTANT
+# Though we primarily rely on ~/.aws/credentials,
+# prevent accidental commit of any local credential files.
+*.pem
+aws_credentials.ini
